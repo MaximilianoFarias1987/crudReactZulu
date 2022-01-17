@@ -1,6 +1,7 @@
 import { isEmpty, size } from 'lodash';
-import React, {useState} from 'react';
-import shortid from 'shortid';
+import React, {useState, useEffect} from 'react';
+// import shortid from 'shortid';
+import { addDocument, deleteDocument, getCollection, updateDocument } from './actions';
 
 
 function App() {
@@ -11,6 +12,20 @@ function App() {
   const [editMode, setEditMode] = useState(false)
   const [id, setId] = useState("")
   const [error, setError] = useState(null)
+  
+useEffect(() => {
+  (async () => {
+    const result = await getCollection("tasks")
+
+    if (result.statusResponse) {
+      console.log(result.data);
+      setTasks(result.data)
+    }
+    
+    
+  })()
+  
+}, [])
 
   const validForm = () => {
     let isValid = true
@@ -23,27 +38,62 @@ function App() {
     return isValid
   }
 
-  const addTask = (e) => {
+  // const addTask = (e) => {
+  //   e.preventDefault();
+
+  //   if (!validForm()) {
+  //     return
+  //   }
+
+  //   const newTask = {
+  //     id: shortid.generate(),
+  //     name: task
+  //   }
+
+  //   setTasks([...tasks, newTask]);
+  //   console.log(newTask.name);
+  //   console.log(tasks);
+
+  //   setTask('');
+  // }
+
+  const addTask = async(e) => {
     e.preventDefault();
 
     if (!validForm()) {
       return
     }
 
-    const newTask = {
-      id: shortid.generate(),
-      name: task
+    const result = await addDocument('tasks', {name : task})
+
+    if (!result.statusResponse) {
+      setError(result.error)
+      return
     }
 
-    setTasks([...tasks, newTask]);
-    console.log(newTask.name);
+    setTasks([...tasks, {id: result.data.id, name: task}]);
+    
     console.log(tasks);
 
     setTask('');
   }
 
 
-  const deleteTask = (id) =>{
+  // const deleteTask = (id) =>{
+  //   const filterTask = tasks.filter(task => task.id !== id)
+
+  //   setTasks(filterTask)
+  // }
+
+  const deleteTask = async(id) =>{
+
+    const result = await deleteDocument('tasks', id)
+
+    if (!result.statusResponse) {
+      setError(result.error)
+      return
+    }
+
     const filterTask = tasks.filter(task => task.id !== id)
 
     setTasks(filterTask)
@@ -56,17 +106,39 @@ function App() {
     setId(theTask.id)
   }
 
-  const saveTask = (e) => {
+  // const saveTask = (e) => {
+  //   e.preventDefault();
+
+  //   if (!validForm()) {
+  //     return
+  //   }
+  //   const editedTasks = tasks.map(item => item.id === id ? {id, name: task} : item)
+  //   setTasks(editedTasks)
+  //   console.log(editedTasks)
+  //   // console.log(newTask.name);
+  //   // console.log(tasks);
+  //   setEditMode(false)
+  //   setTask('')
+  //   setId('')
+  // }
+
+  const saveTask = async(e) => {
     e.preventDefault();
 
     if (!validForm()) {
       return
     }
+
+    const result = await updateDocument('tasks', id, {name: task})
+
+    if (!result.statusResponse) {
+      setError(result.error)
+      return
+    }
+
     const editedTasks = tasks.map(item => item.id === id ? {id, name: task} : item)
     setTasks(editedTasks)
     console.log(editedTasks)
-    // console.log(newTask.name);
-    // console.log(tasks);
     setEditMode(false)
     setTask('')
     setId('')
@@ -75,14 +147,14 @@ function App() {
 
   return (
     <div className='container mt-5'>
-      <h1> Tareas</h1>
+      <h1> Cursos </h1>
       <hr/>
       <div className='row'>
         <div className='col-8'>
-          <h4 className='text-center'>Lista de Tareas</h4>
+          <h4 className='text-center'>Lista de Cursos</h4>
           {
             size(tasks) === 0 ? (
-              <li className='list-group-item'>No hay tareas programadas.</li>
+              <li className='list-group-item'>No hay cursos programados.</li>
             ) : (
               <ul className='list-group'>
             {
@@ -122,12 +194,12 @@ function App() {
         </div>
         <div className='col-4'>
         <h4 className='text-center'>
-          {editMode ? 'Modificar Tarea' : 'Agregar Tarea'}
+          {editMode ? 'Modificar Curso' : 'Agregar Curso'}
         </h4>
         <form onSubmit={editMode ? saveTask : addTask}>
           <input
           className='form-control mb-2'
-          placeholder='Ingrese la tarea...'
+          placeholder='Ingrese un Curso...'
           type='text'
           onChange={(text) => setTask(text.target.value)}
           value = {task}
@@ -140,7 +212,7 @@ function App() {
           <button 
           className={editMode ? 'btn btn-warning btn-block mt-2' : 'btn btn-dark btn-block mt-2' }
           type='submit'>
-            {editMode ? 'Editar Tarea' : 'Agregar Tarea'}
+            {editMode ? 'Editar Curso' : 'Agregar Curso'}
           </button>
         </form>
         </div>
